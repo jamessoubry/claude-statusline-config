@@ -2,15 +2,25 @@
 
 Custom [Claude Code](https://claude.ai/code) statusline using [starship-claude](https://github.com/martinemde/starship-claude) and [Starship](https://starship.rs/).
 
+The same `starship.toml` drives both the **zsh prompt** and the **Claude Code statusline** — the config detects which context it's running in and shows different segments accordingly.
+
 ## What it looks like
 
-A powerline-style prompt with:
+**In Claude Code** (statusline):
 
 - **Time** — current time in orange
 - **Context %** — Claude context window usage (green < 80%, blinking red ≥ 80%)
 - **Directory** — current working directory in blue
 - **Git branch + status** — in green with symbol
 - **Model** — current Claude model with NerdFont icon (haiku / sonnet / opus)
+
+**In zsh** (terminal prompt):
+
+- **Time** — current time in orange
+- **Directory** — current working directory in blue
+- **Git branch + status** — in green with symbol
+
+The Claude-specific segments (`context %`, `model`) are hidden in the terminal because `CLAUDE_CONTEXT` is only set when `starship-claude` invokes Starship. In terminal mode, a simple orange→blue arrow replaces the context segment.
 
 ## Setup
 
@@ -31,7 +41,16 @@ curl -fsSL https://raw.githubusercontent.com/martinemde/starship-claude/main/ins
 cp starship.toml ~/.claude/starship.toml
 ```
 
-### 3. Add to Claude Code settings
+### 3. Configure zsh
+
+Add to `~/.zshrc`:
+
+```zsh
+export STARSHIP_CONFIG=~/.claude/starship.toml
+eval "$(starship init zsh)"
+```
+
+### 4. Add to Claude Code settings
 
 Add the following to `~/.claude/settings.json`:
 
@@ -44,7 +63,7 @@ Add the following to `~/.claude/settings.json`:
 }
 ```
 
-### 4. Restart Claude Code
+### 5. Restart Claude Code
 
 The statusline is only loaded at startup.
 
