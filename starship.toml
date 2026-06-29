@@ -1,0 +1,112 @@
+"$schema" = "https://starship.rs/config-schema.json"
+add_newline = false
+palette = "agnosterhacked"
+
+# Terminal:      time -> dir -> git ->
+# Claude status: time -> ctx% -> dir -> git -> model
+#
+#  = powerline right arrow (solid)
+#  = powerline branch symbol
+#
+# custom.time_to_dir:   orange->blue arrow, terminal mode only
+# custom.claude_ctx_ok:  ctx% in green, shown when < 85% used
+# custom.claude_ctx_crit: ctx% blinking red, shown when >= 85% used (<=15% remaining)
+# custom.git_close:     green closing arrow, always shown inside a git repo
+format = """
+$time\
+${custom.time_to_dir}\
+${custom.claude_ctx_ok}\
+${custom.claude_ctx_crit}\
+$directory\
+$git_branch\
+$git_status\
+${custom.git_close}\
+${env_var.CLAUDE_MODEL_NERD}\
+ """
+
+# ── Palette ───────────────────────────────────────────────────────────────────
+[palettes.agnosterhacked]
+ctx_ok   = "70"   # 256-colour green  (0-40% context)
+ctx_warn = "214"  # 256-colour amber  (40-60%)
+ctx_err  = "160"  # 256-colour red    (60%+)
+
+# ── Time ──────────────────────────────────────────────────────────────────────
+# No trailing arrow - custom.time_to_dir (terminal) or claude_ctx (Claude) handles it
+[time]
+disabled = false
+time_format = "%H:%M:%S"
+format = "[ $time ](bg:214 fg:black)"
+
+# ── Time->Dir arrow (terminal mode only) ─────────────────────────────────────
+# Hidden in Claude mode - claude_ctx_ok/crit provides the orange->ctx_ok->blue transition
+[custom.time_to_dir]
+command = "printf x"
+when = "test -z \"${CLAUDE_CONTEXT:-}\""
+use_stdin = false
+format = "[](fg:214 bg:blue)"
+shell = ["bash", "--noprofile", "--norc", "-c"]
+
+# ── Directory ─────────────────────────────────────────────────────────────────
+[directory]
+style = "bg:blue fg:black"
+format = "[ $path ]($style)[](fg:blue bg:green)"
+truncation_length = 100
+truncate_to_repo = false
+home_symbol = "~"
+
+# ── Git branch ────────────────────────────────────────────────────────────────
+[git_branch]
+symbol = ""
+style = "bg:green fg:black"
+format = "[ $symbol $branch]($style)"
+
+# ── Git status ────────────────────────────────────────────────────────────────
+[git_status]
+style = "bg:green fg:black"
+format = "[$all_status]($style)"
+staged     = "✚"
+modified   = "●"
+untracked  = "?"
+ahead      = "⇡"
+behind     = "⇣"
+conflicted = "="
+deleted    = "✘"
+renamed    = "»"
+stashed    = "≡"
+
+# ── Green closing arrow (always shown — caps the green segment outside git repos too) ──
+[custom.git_close]
+command = "printf x"
+when = "test -z \"${CLAUDE_CONTEXT:-}\""
+use_stdin = false
+format = "[](fg:green)"
+shell = ["bash", "--noprofile", "--norc", "-c"]
+
+# ── Claude: Context % (normal — < 85% used) ──────────────────────────────────
+[custom.claude_ctx_ok]
+command = "printf '%s' \"${CLAUDE_CONTEXT}\""
+when = "test -n \"${CLAUDE_CONTEXT:-}\" && test \"${CLAUDE_PERCENT_RAW:-0}\" -lt 80 2>/dev/null"
+use_stdin = false
+format = "[](fg:214 bg:ctx_ok)[ $output ](fg:black bg:ctx_ok)[](fg:ctx_ok bg:blue)"
+shell = ["bash", "--noprofile", "--norc", "-c"]
+
+# ── Claude: Context % (critical — >= 85% used / <=15% remaining) ─────────────
+[custom.claude_ctx_crit]
+command = "printf '%s' \"${CLAUDE_CONTEXT}\""
+when = "test -n \"${CLAUDE_CONTEXT:-}\" && test \"${CLAUDE_PERCENT_RAW:-0}\" -ge 80 2>/dev/null"
+use_stdin = false
+format = "[](fg:214 bg:red)[ $output ](blink fg:white bg:red)[](fg:red bg:blue)"
+shell = ["bash", "--noprofile", "--norc", "-c"]
+
+# ── Claude extras: not in format but kept for future use ─────────────────────
+[env_var.CLAUDE_RATE_5H]
+variable = "CLAUDE_RATE_5H"
+format = "[ · $env_value ](fg:black bg:ctx_ok)"
+
+[env_var.CLAUDE_MODEL_NERD]
+variable = "CLAUDE_MODEL_NERD"
+format = "[](fg:green bg:236)[ $env_value ](fg:white bg:236)[](fg:236)"
+
+[env_var.CLAUDE_COST]
+variable = "CLAUDE_COST"
+format = "[ $env_value ](fg:white bg:236)[](fg:236)"
